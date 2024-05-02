@@ -1,0 +1,66 @@
+// Book.java - Entity Class
+@Entity
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private String author;
+    private String isbn;
+    private String genre;
+    private int publicationYear;
+    
+    // Getters and setters
+}
+
+// BookRepository.java - Repository Interface
+@Repository
+public interface BookRepository extends JpaRepository<Book, Long> {
+}
+
+// BookController.java - REST Controller
+@RestController
+@RequestMapping("/books")
+public class BookController {
+    @Autowired
+    private BookRepository bookRepository;
+    
+    @GetMapping
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<Book> getBookById(@PathVariable Long id) {
+        Book book = bookRepository.findById(id)
+                                  .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + id));
+        return ResponseEntity.ok(book);
+    }
+    
+    @PostMapping
+    public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
+        Book createdBook = bookRepository.save(book);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book bookDetails) {
+        Book book = bookRepository.findById(id)
+                                  .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + id));
+        book.setTitle(bookDetails.getTitle());
+        book.setAuthor(bookDetails.getAuthor());
+        book.setIsbn(bookDetails.getIsbn());
+        book.setGenre(bookDetails.getGenre());
+        book.setPublicationYear(bookDetails.getPublicationYear());
+        Book updatedBook = bookRepository.save(book);
+        return ResponseEntity.ok(updatedBook);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteBook(@PathVariable Long id) {
+        Book book = bookRepository.findById(id)
+                                  .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + id));
+        bookRepository.delete(book);
+        return ResponseEntity.ok().build();
+    }
+}
